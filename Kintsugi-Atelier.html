@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kintsugi-Atelier</title>
+<title>Kintsugi Atelier</title>
 <!--
   Kintsugi-Atelier — eine einzelne, eigenständige HTML-Datei.
   Keine externen Dateien, kein Netzwerkzugriff: Three.js (r170, MIT-Lizenz) ist unten eingebettet,
@@ -53,9 +53,9 @@
   .swatches { display: flex; gap: 9px; flex-wrap: wrap; }
   .swatch { width: 30px; height: 30px; min-height: 0; padding: 0; border-radius: 50%; border: 2px solid var(--rim, #888); box-shadow: inset 0 -3px 5px rgba(0, 0, 0, .35); }
   .swatch[aria-pressed=true] { outline: 2px solid var(--gold); outline-offset: 3px; }
-  #glazeName { color: var(--washi); float: right; }
+  #glazeName, #fillName { color: var(--washi); float: right; }
 
-  .topright { position: fixed; right: 22px; top: 20px; display: flex; gap: 8px; }
+  .topright { position: fixed; right: 22px; top: 20px; display: flex; gap: 8px; z-index: 2; }
   .topright button { background: rgba(21, 16, 14, .78); }
   .topright > button:hover:not(:disabled), .audio > button:hover:not(:disabled) { background: rgba(44, 34, 28, .92); }
   .view-vitrine #openGallery { display: none; }
@@ -93,6 +93,16 @@
   .progress .bar { height: 3px; background: rgba(236, 228, 212, .14); margin: 5px 0 4px; }
   .progress .bar i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .3s; }
   .is-complete .progress .bar i { box-shadow: 0 0 10px var(--gold); }
+
+  /* ---- Startbild ---- */
+  .start { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; text-align: center; padding: 24px;
+    background: radial-gradient(ellipse at 50% 45%, rgba(21, 16, 14, .7), rgba(12, 9, 8, .93) 70%); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+  .view-start .start { display: flex; }
+  .view-start .studio-ui, .view-start #openGallery { display: none; }
+  .start-kanji { font: 400 clamp(64px, 13vh, 120px)/1 var(--serif); letter-spacing: .1em; color: var(--gold); margin: 0 0 22px; text-shadow: 0 2px 40px rgba(216, 174, 88, .35); }
+  .start h1 { font: 400 clamp(26px, 4.2vh, 38px)/1.15 var(--serif); letter-spacing: .06em; margin: 0 0 12px; }
+  .start-tag { font: 400 17px/1.5 var(--serif); color: var(--ash); max-width: 52ch; text-wrap: balance; margin: 0 auto 34px; }
+  #startBtn { font-size: 17px; padding: 12px 46px; min-height: 48px; letter-spacing: .04em; }
 
   /* ---- Vitrine ---- */
   .vitrine-ui { display: none; }
@@ -146,77 +156,91 @@
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
-<body>
-<canvas id="stage" tabindex="0" aria-label="3D-Ansicht: Keramikgefäß auf einem Holztisch"></canvas>
+<body class="view-start">
+<canvas id="stage" tabindex="0" data-i18n-aria="canvasLabel" aria-label="3D view: ceramic vessel on a wooden table"></canvas>
 <div class="vignette"></div>
+
+<!-- Feste Texte stehen hier auf Englisch (Standard); data-i18n verweist auf den Eintrag in I18N (§1b). -->
+
+<!-- ================= Startbild ================= -->
+<div class="start" id="start">
+  <div class="start-inner">
+    <p class="start-kanji" lang="ja" aria-hidden="true">金継ぎ</p>
+    <h1 data-i18n="title">Kintsugi Atelier</h1>
+    <p class="start-tag" data-i18n="tagline">The Japanese art of mending broken pottery with gold.</p>
+    <button id="startBtn" type="button" class="primary" data-i18n="start" autofocus>Start</button>
+  </div>
+</div>
 
 <!-- ================= Atelier ================= -->
 <div class="studio-ui">
   <div class="bench">
     <p class="kanji" lang="ja" aria-hidden="true">金継ぎ</p>
     <div class="tray">
-      <h1>Kintsugi-Atelier</h1>
-      <div class="field"><label for="shape">Form</label><select id="shape"></select></div>
-      <div class="field"><span>Glasur <b id="glazeName"></b></span><div class="swatches" id="glazes"></div></div>
-      <div class="field"><label for="room">Raum</label><select id="room"></select></div>
-      <button id="newVessel" type="button" title="Taste N">Neues Gefäß</button>
+      <h1 data-i18n="title">Kintsugi Atelier</h1>
+      <div class="field"><label for="shape" data-i18n="shape">Shape</label><select id="shape"></select></div>
+      <div class="field"><span><span data-i18n="glaze">Glaze</span> <b id="glazeName"></b></span><div class="swatches" id="glazes"></div></div>
+      <div class="field"><span><span data-i18n="fill">Seam fill</span> <b id="fillName"></b></span><div class="swatches" id="fills"></div></div>
+      <div class="field"><label for="room" data-i18n="room">Room</label><select id="room"></select></div>
+      <button id="newVessel" type="button" data-i18n="newVessel" data-i18n-title="keyN" title="Key N">New vessel</button>
     </div>
   </div>
   <div class="dockwrap">
     <p class="hint" id="hint" role="status" aria-live="polite"></p>
     <div class="dock">
-      <div class="modes" role="group" aria-label="Modus">
-        <button id="modeBreak" type="button" aria-pressed="true" title="Taste B">Zerbrechen</button>
-        <button id="modeMend" type="button" aria-pressed="false" title="Taste K">Zusammenfügen</button>
+      <div class="modes" role="group" data-i18n-aria="modeAria" aria-label="Mode">
+        <button id="modeBreak" type="button" aria-pressed="true" data-i18n="break" data-i18n-title="keyB" title="Key B">Break</button>
+        <button id="modeMend" type="button" aria-pressed="false" data-i18n="mend" data-i18n-title="keyK" title="Key K">Mend</button>
       </div>
       <div class="ctx" id="ctxBreak">
-        <label>Wucht <input type="range" id="force" min="0.1" max="1" step="0.01" value="0.55"></label>
-        <button id="drop" type="button" title="Taste F">Fallen lassen</button>
+        <label><span data-i18n="force">Force</span> <input type="range" id="force" min="0.1" max="1" step="0.01" value="0.55"></label>
+        <button id="drop" type="button" data-i18n="drop" data-i18n-title="keyF" title="Key F">Drop it</button>
       </div>
       <div class="ctx" id="ctxMend" hidden>
-        <div class="tools" role="group" aria-label="Werkzeug">
-          <button id="toolHand" type="button" aria-pressed="true" title="Scherben greifen (Taste H)">Hand</button>
-          <button id="toolBrush" type="button" aria-pressed="false" title="Gold von Hand auftragen (Taste P)">Pinsel</button>
+        <div class="tools" role="group" data-i18n-aria="toolAria" aria-label="Tool">
+          <button id="toolHand" type="button" aria-pressed="true" data-i18n="hand" data-i18n-title="handTitle" title="Pick up shards (key H)">Hand</button>
+          <button id="toolBrush" type="button" aria-pressed="false" data-i18n="brush" data-i18n-title="brushTitle" title="Apply the fill by hand (key P)">Brush</button>
         </div>
-        <label><input type="checkbox" id="autoGold" checked>Gold fließt von selbst</label>
-        <button id="mendAll" type="button" title="Taste A">Alles zusammenfügen</button>
+        <label><input type="checkbox" id="autoGold"><span data-i18n="autoFill">Fill flows by itself</span></label>
+        <button id="mendAll" type="button" data-i18n="mendAll" data-i18n-title="keyA" title="Key A">Mend all</button>
         <div class="progress"><span id="progShards"></span><div class="bar"><i id="progGold"></i></div><span id="progGoldText"></span></div>
-        <button id="save" type="button" class="primary" disabled>In Sammlung speichern</button>
+        <button id="save" type="button" class="primary" disabled>Save to collection</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= Ton + Sammlung (in beiden Ansichten) ================= -->
+<!-- ================= Ton, Sprache, Sammlung (in beiden Ansichten) ================= -->
 <div class="topright">
   <div class="audio">
-    <button id="audioBtn" type="button" aria-expanded="false" aria-controls="audioPanel">Ton</button>
+    <button id="audioBtn" type="button" aria-expanded="false" aria-controls="audioPanel">Sound</button>
     <div id="audioPanel" class="audio-panel" hidden>
-      <div class="arow" id="musicRow"><label for="musicVol">Musik</label><input type="range" id="musicVol" min="0" max="1" step="0.01"><button id="musicMute" type="button" aria-pressed="false">Stumm</button></div>
-      <div class="arow" id="sfxRow"><label for="sfxVol">Effekte</label><input type="range" id="sfxVol" min="0" max="1" step="0.01"><button id="sfxMute" type="button" aria-pressed="false">Stumm</button></div>
+      <div class="arow" id="musicRow"><label for="musicVol" data-i18n="music">Music</label><input type="range" id="musicVol" min="0" max="1" step="0.01"><button id="musicMute" type="button" aria-pressed="false" data-i18n="mute">Mute</button></div>
+      <div class="arow" id="sfxRow"><label for="sfxVol" data-i18n="effects">Effects</label><input type="range" id="sfxVol" min="0" max="1" step="0.01"><button id="sfxMute" type="button" aria-pressed="false" data-i18n="mute">Mute</button></div>
     </div>
   </div>
-  <button id="openGallery" type="button">Sammlung<span id="galleryCount">0</span></button>
+  <button id="langBtn" type="button" data-i18n="otherLang" data-i18n-title="langTitle" title="Switch language (Sprache wechseln)">Deutsch</button>
+  <button id="openGallery" type="button"><span data-i18n="collection">Collection</span><span id="galleryCount">0</span></button>
 </div>
 
 <!-- ================= Vitrine ================= -->
 <div class="vitrine-ui">
   <div class="plate">
-    <label class="sr" for="pieceName">Name des Stücks</label>
+    <label class="sr" for="pieceName" data-i18n="pieceNameLabel">Name of the piece</label>
     <input type="text" id="pieceName" maxlength="60" autocomplete="off">
     <p id="pieceMeta"></p>
     <div class="row">
-      <button id="backStudio" type="button">Zurück ins Atelier</button>
-      <button id="backList" type="button">Zur Sammlung</button>
+      <button id="backStudio" type="button" data-i18n="backStudio">Back to the studio</button>
+      <button id="backList" type="button" data-i18n="backList">To the collection</button>
     </div>
   </div>
   <div class="vdock">
     <div class="dock">
       <div class="ctx">
-        <label>Scherben auseinanderziehen <input type="range" id="explode" min="0" max="0.9" step="0.01" value="0"></label>
-        <label><input type="checkbox" id="spin" checked>Langsam drehen</label>
-        <button id="piecePNG" type="button">Bild speichern</button>
-        <button id="pieceDelete" type="button">Stück löschen</button>
+        <label><span data-i18n="explode">Pull shards apart</span> <input type="range" id="explode" min="0" max="0.9" step="0.01" value="0"></label>
+        <label><input type="checkbox" id="spin" checked><span data-i18n="spin">Rotate slowly</span></label>
+        <button id="piecePNG" type="button" data-i18n="savePng">Save image</button>
+        <button id="pieceDelete" type="button" data-i18n="deletePiece">Delete piece</button>
       </div>
     </div>
   </div>
@@ -225,28 +249,28 @@
 <!-- ================= Dialoge ================= -->
 <dialog id="gallery" aria-labelledby="galleryTitle">
   <div class="sheet-head">
-    <h2 id="galleryTitle">Sammlung</h2>
-    <button id="importBtn" type="button">Importieren</button>
-    <button id="exportAll" type="button">Exportieren</button>
-    <button id="closeGallery" type="button">Schließen</button>
+    <h2 id="galleryTitle" data-i18n="collection">Collection</h2>
+    <button id="importBtn" type="button" data-i18n="import">Import</button>
+    <button id="exportAll" type="button" data-i18n="export">Export</button>
+    <button id="closeGallery" type="button" data-i18n="close">Close</button>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
   </div>
   <div class="sheet-body">
     <p id="galleryNote"></p>
-    <p id="galleryEmpty">Noch ist die Sammlung leer. Zerbrich ein Gefäß, füge es mit Gold zusammen und speichere es – dann kannst du es hier jederzeit einzeln ansehen.</p>
+    <p id="galleryEmpty" data-i18n="galleryEmpty">The collection is still empty. Break a vessel, mend it and save it – then you can look at it here any time.</p>
     <div class="cards" id="galleryList"></div>
   </div>
 </dialog>
 
 <dialog id="saveDialog" aria-labelledby="saveTitle">
   <form id="saveForm" method="dialog">
-    <h2 id="saveTitle">In Sammlung speichern</h2>
-    <p>Offene Fugen werden dabei vergoldet.</p>
-    <label class="sr" for="saveName">Name</label>
+    <h2 id="saveTitle" data-i18n="save">Save to collection</h2>
+    <p data-i18n="saveNote">Open seams are filled when you save.</p>
+    <label class="sr" for="saveName" data-i18n="nameLabel">Name</label>
     <input type="text" id="saveName" maxlength="60" autocomplete="off" required>
     <div class="row">
-      <button id="saveCancel" type="button">Abbrechen</button>
-      <button type="submit" class="primary">Speichern</button>
+      <button id="saveCancel" type="button" data-i18n="cancel">Cancel</button>
+      <button type="submit" class="primary" data-i18n="saveBtn">Save</button>
     </div>
   </form>
 </dialog>
@@ -4083,6 +4107,7 @@ void main() {
  *  ---------------------------------------------------------------------
  *  Aufbau (jeder Abschnitt ist unten mit "§" markiert):
  *    §1  Hilfsfunktionen, Zufall, Rauschen
+ *    §1b SPRACHE: alle Texte Englisch/Deutsch (I18N)       <-- hier übersetzen
  *    §2  REGISTRY: Formen (SHAPES) und Glasuren (GLAZES)   <-- hier erweitern
  *    §3  Geometrie: Profil -> Gefäßgitter, Henkel
  *    §4  Bruch: Voronoi-Zerlegung in Scherben + Fugenlinien
@@ -4099,7 +4124,7 @@ void main() {
  *
  *    Kintsugi.registerShape({
  *      id: 'meine-schale',            // eindeutig
- *      name: 'Meine Schale',          // Anzeige im Menü
+ *      name: 'Meine Schale',          // Anzeige im Menü; auch { en: '...', de: '...' } möglich
  *      profile: [[0,0],[0.4,0],[0.8,0.3],[1.0,0.7]],
  *                                     // AUSSENKONTUR als [Radius, Höhe]-Punkte,
  *                                     // von der Bodenmitte (Radius 0) bis zum Rand.
@@ -4113,6 +4138,7 @@ void main() {
  *      shards: 1                      // Faktor für die Scherbenzahl
  *    });
  *
+ *  EIGENE FÜLLUNG: Kintsugi.registerFill({ id, name, color, metalness, roughness, glow, halo })
  *  EIGENE GLASUR: Kintsugi.registerGlaze({ id, name, base, pool, brk, speck,
  *                  clay, roughness, clearcoat, speckle })   (Farben als '#rrggbb')
  * ===================================================================== */
@@ -4162,6 +4188,7 @@ function vnoise3(x, y, z, s) {
  * ------------------------------------------------------------------- */
 const SHAPES = new Map();
 const GLAZES = new Map();
+const FILLS = new Map();                        // Füllmaterial der Fugen (Gold, Silber, ...)
 const registryListeners = [];
 
 function registerShape(def) {
@@ -4182,48 +4209,168 @@ function registerGlaze(def) {
   return def.id;
 }
 
+/** Füllmaterial: color = Grundfarbe, metalness/roughness = Oberfläche im ausgehärteten Zustand,
+ *  base = schwaches Eigenleuchten, glow/flash/halo = Farben des frisch aufgetragenen, glühenden Lacks. */
+function registerFill(def) {
+  if (!def || !def.id || !def.color) throw new Error('Füllung braucht id und color');
+  FILLS.set(def.id, Object.assign({ name: def.id, metalness: 1, roughness: 0.3, env: 2.2, base: [0.1, 0.1, 0.1], glow: [1, 0.5, 0.1], flash: [1, 0.9, 0.6], halo: [1, 0.5, 0.1] }, def));
+  registryListeners.forEach(f => f());
+  return def.id;
+}
+registerFill({ id: 'gold', name: { de: 'Gold', en: 'Gold' }, color: '#ffcb63', metalness: 1, roughness: 0.3, env: 2.4, base: [0.2, 0.125, 0.028], glow: [1, 0.47, 0.08], flash: [1, 0.86, 0.55], halo: [1, 0.52, 0.12] });
+registerFill({ id: 'silber', name: { de: 'Silber', en: 'Silver' }, color: '#e4e8ee', metalness: 1, roughness: 0.26, env: 2.3, base: [0.1, 0.105, 0.115], glow: [0.5, 0.72, 1], flash: [0.9, 0.96, 1], halo: [0.42, 0.62, 1] });
+registerFill({ id: 'kupfer', name: { de: 'Kupfer', en: 'Copper' }, color: '#ea8a58', metalness: 1, roughness: 0.32, env: 2.3, base: [0.2, 0.07, 0.03], glow: [1, 0.3, 0.07], flash: [1, 0.7, 0.5], halo: [1, 0.34, 0.1] });
+registerFill({ id: 'urushi', name: { de: 'Roter Lack (Urushi)', en: 'Red lacquer (Urushi)' }, color: '#a01d12', metalness: 0, roughness: 0.2, env: 1.5, base: [0.045, 0.005, 0.004], glow: [0.9, 0.12, 0.05], flash: [1, 0.5, 0.4], halo: [0.9, 0.16, 0.07] });
+
 registerShape({
-  id: 'chawan', name: 'Teeschale (Chawan)',
+  id: 'chawan', name: { de: 'Teeschale (Chawan)', en: 'Tea bowl (Chawan)' },
   profile: [[0, 0], [0.36, 0], [0.62, 0.07], [0.85, 0.25], [0.98, 0.5], [1.03, 0.76]],
   thickness: 0.065, foot: { radius: 0.36, width: 0.1, height: 0.07 }
 });
 registerShape({
-  id: 'yunomi', name: 'Teebecher (Yunomi)',
+  id: 'yunomi', name: { de: 'Teebecher (Yunomi)', en: 'Tea cup (Yunomi)' },
   profile: [[0, 0], [0.36, 0], [0.5, 0.06], [0.57, 0.3], [0.58, 0.72], [0.61, 1.08]],
   thickness: 0.055, foot: { radius: 0.34, width: 0.09, height: 0.05 }
 });
 registerShape({
-  id: 'tasse', name: 'Tasse mit Henkel',
+  id: 'tasse', name: { de: 'Tasse mit Henkel', en: 'Mug with handle' },
   profile: [[0, 0], [0.44, 0], [0.54, 0.05], [0.57, 0.22], [0.57, 0.9], [0.585, 1.04]],
   thickness: 0.055, foot: { radius: 0.4, width: 0.08, height: 0.03 },
   handle: { top: 0.84, bottom: 0.26, reach: 0.4, radius: 0.066 }
 });
 registerShape({
-  id: 'teller', name: 'Teller',
+  id: 'teller', name: { de: 'Teller', en: 'Plate' },
   profile: [[0, 0], [0.72, 0], [0.9, 0.04], [1.04, 0.13], [1.3, 0.18], [1.5, 0.21]],
   thickness: 0.05, foot: { radius: 0.74, width: 0.09, height: 0.04 }, shards: 0.9
 });
 registerShape({
-  id: 'vase', name: 'Vase',
+  id: 'vase', name: { de: 'Vase', en: 'Vase' },
   profile: [[0, 0], [0.4, 0], [0.62, 0.12], [0.8, 0.5], [0.76, 0.95], [0.52, 1.35], [0.31, 1.66], [0.28, 1.9], [0.38, 2.06]],
   thickness: 0.06, foot: { radius: 0.4, width: 0.1, height: 0.04 }, shards: 1.2
 });
 registerShape({
-  id: 'tokkuri', name: 'Sake-Flasche (Tokkuri)',
+  id: 'tokkuri', name: { de: 'Sake-Flasche (Tokkuri)', en: 'Sake flask (Tokkuri)' },
   profile: [[0, 0], [0.32, 0], [0.5, 0.08], [0.6, 0.4], [0.54, 0.8], [0.28, 1.1], [0.185, 1.3], [0.185, 1.42], [0.28, 1.56]],
   thickness: 0.045, foot: { radius: 0.32, width: 0.08, height: 0.03 }
 });
 registerShape({
-  id: 'guinomi', name: 'Sake-Schälchen (Guinomi)',
+  id: 'guinomi', name: { de: 'Sake-Schälchen (Guinomi)', en: 'Sake cup (Guinomi)' },
   profile: [[0, 0], [0.26, 0], [0.5, 0.1], [0.62, 0.3], [0.66, 0.5]],
   thickness: 0.05, foot: { radius: 0.27, width: 0.08, height: 0.06 }, shards: 0.7
 });
 
-registerGlaze({ id: 'seladon', name: 'Seladon', base: '#9dbba6', pool: '#6f9a86', brk: '#cbc3a1', speck: '#42604f', clay: '#b9a58d', roughness: 0.2, clearcoat: 1, speckle: 0.35 });
-registerGlaze({ id: 'shino', name: 'Shino-Weiß', base: '#e8dfce', pool: '#d8cab2', brk: '#b0643a', speck: '#8a5532', clay: '#a9744f', roughness: 0.34, clearcoat: 0.7, speckle: 0.8 });
-registerGlaze({ id: 'tenmoku', name: 'Tenmoku', base: '#1f1612', pool: '#0e0a09', brk: '#7c451b', speck: '#a8702f', clay: '#5d4838', roughness: 0.16, clearcoat: 1, speckle: 0.9 });
-registerGlaze({ id: 'kobalt', name: 'Kobaltblau', base: '#2b4d82', pool: '#162d59', brk: '#93a9c4', speck: '#0f1d38', clay: '#c6b7a2', roughness: 0.2, clearcoat: 1, speckle: 0.4 });
-registerGlaze({ id: 'kuro', name: 'Mattschwarz (Kuro)', base: '#1c1c1e', pool: '#141416', brk: '#3d3632', speck: '#2e2a28', clay: '#4c4138', roughness: 0.62, clearcoat: 0.12, speckle: 0.3 });
+registerGlaze({ id: 'seladon', name: { de: 'Seladon', en: 'Celadon' }, base: '#9dbba6', pool: '#6f9a86', brk: '#cbc3a1', speck: '#42604f', clay: '#b9a58d', roughness: 0.2, clearcoat: 1, speckle: 0.35 });
+registerGlaze({ id: 'shino', name: { de: 'Shino-Weiß', en: 'Shino white' }, base: '#e8dfce', pool: '#d8cab2', brk: '#b0643a', speck: '#8a5532', clay: '#a9744f', roughness: 0.34, clearcoat: 0.7, speckle: 0.8 });
+registerGlaze({ id: 'tenmoku', name: { de: 'Tenmoku', en: 'Tenmoku' }, base: '#1f1612', pool: '#0e0a09', brk: '#7c451b', speck: '#a8702f', clay: '#5d4838', roughness: 0.16, clearcoat: 1, speckle: 0.9 });
+registerGlaze({ id: 'kobalt', name: { de: 'Kobaltblau', en: 'Cobalt blue' }, base: '#2b4d82', pool: '#162d59', brk: '#93a9c4', speck: '#0f1d38', clay: '#c6b7a2', roughness: 0.2, clearcoat: 1, speckle: 0.4 });
+registerGlaze({ id: 'kuro', name: { de: 'Mattschwarz (Kuro)', en: 'Matte black (Kuro)' }, base: '#1c1c1e', pool: '#141416', brk: '#3d3632', speck: '#2e2a28', clay: '#4c4138', roughness: 0.62, clearcoat: 0.12, speckle: 0.3 });
+
+/* ---------------------------------------------------------------- §1b
+ *  SPRACHE — alle sichtbaren Texte in Englisch (Standard) und Deutsch.
+ *  t('schlüssel', { platzhalter }) liefert den Text der aktuellen Sprache.
+ *  Feste Texte im HTML tragen data-i18n="schlüssel" (bzw. -title / -aria).
+ *  Namen in den Registries dürfen ein Text oder { en, de } sein -> L(name).
+ *  Weitere Sprache: I18N.fr = { ... } ergänzen und setLang('fr') aufrufen.
+ * ------------------------------------------------------------------- */
+const I18N = {
+  en: {
+    title: 'Kintsugi Atelier', canvasLabel: '3D view: ceramic vessel on a wooden table',
+    tagline: 'The Japanese art of mending broken pottery with gold.', start: 'Start',
+    shape: 'Shape', glaze: 'Glaze', fill: 'Seam fill', room: 'Room', newVessel: 'New vessel',
+    glazeAria: 'Glaze {name}', fillAria: 'Seam fill {name}',
+    keyN: 'Key N', keyB: 'Key B', keyK: 'Key K', keyF: 'Key F', keyA: 'Key A',
+    modeAria: 'Mode', break: 'Break', mend: 'Mend', force: 'Force', drop: 'Drop it',
+    toolAria: 'Tool', hand: 'Hand', brush: 'Brush', handTitle: 'Pick up shards (key H)', brushTitle: 'Apply the fill by hand (key P)',
+    autoFill: 'Fill flows by itself', mendAll: 'Mend all', save: 'Save to collection', saved: 'Saved',
+    shardsOf: '{a} of {b} shards', intact: 'still intact', filled: '{p}% filled',
+    sound: 'Sound', soundOff: 'Sound off', music: 'Music', effects: 'Effects', mute: 'Mute',
+    collection: 'Collection', otherLang: 'Deutsch', langTitle: 'Switch language (Sprache wechseln)',
+    pieceNameLabel: 'Name of the piece', backStudio: 'Back to the studio', backList: 'To the collection',
+    explode: 'Pull shards apart', spin: 'Rotate slowly', savePng: 'Save image', deletePiece: 'Delete piece',
+    import: 'Import', export: 'Export', close: 'Close', del: 'Delete',
+    galleryEmpty: 'The collection is still empty. Break a vessel, mend it and save it – then you can look at it here any time.',
+    saveNote: 'Open seams are filled when you save.', nameLabel: 'Name', cancel: 'Cancel', saveBtn: 'Save',
+    hCracking: 'Cracks are running …',
+    hStrike: 'Click the vessel to strike it. Drag to turn the view, scroll to zoom.',
+    hRebreak: 'Click the mended vessel to break it again along its seams.',
+    hGoMend: 'Switch to “Mend” to join the shards again.',
+    hNothing: 'Nothing to mend yet. Break the vessel first.',
+    hInCollection: 'This piece is in your collection.', hComplete: 'Complete. Save the piece to your collection.',
+    hBrushOpen: 'All shards are in place. Brush over the dark cracks.', hCuring: 'The lacquer is setting …',
+    hBrush: 'Brush over the dark cracks between placed shards.',
+    hHand: 'Drag a shard into place – or click it and it finds its own way.',
+    webgl: 'WebGL could not start in this browser. Enable hardware acceleration or use a different browser.',
+    alreadySaved: 'This piece is already in your collection.', savedAs: '“{name}” is now in your collection.',
+    savedTemp: 'Saved – but only until you close the page. This browser does not allow permanent storage here; use “Export”.',
+    untitled: 'Untitled', pieceNo: '{shape} No. {n}', vessel: 'Vessel', meta: '{shape}, {glaze}, {fill}, {n} shards, {date}',
+    viewAria: 'View “{name}” in the showcase', confirmDelete: 'Delete “{name}” from the collection?',
+    imported1: '1 piece imported.', importedN: '{n} pieces imported.', importedNone: 'The file contains no new pieces.',
+    importBad: 'This file is not a Kintsugi collection (not valid JSON).',
+    notPersistent: 'This browser does not store data permanently here. Back up your pieces with “Export”.',
+    dateLocale: 'en-GB'
+  },
+  de: {
+    title: 'Kintsugi-Atelier', canvasLabel: '3D-Ansicht: Keramikgefäß auf einem Holztisch',
+    tagline: 'Die japanische Kunst, zerbrochene Keramik mit Gold zu reparieren.', start: 'Start',
+    shape: 'Form', glaze: 'Glasur', fill: 'Füllung', room: 'Raum', newVessel: 'Neues Gefäß',
+    glazeAria: 'Glasur {name}', fillAria: 'Füllung {name}',
+    keyN: 'Taste N', keyB: 'Taste B', keyK: 'Taste K', keyF: 'Taste F', keyA: 'Taste A',
+    modeAria: 'Modus', break: 'Zerbrechen', mend: 'Zusammenfügen', force: 'Wucht', drop: 'Fallen lassen',
+    toolAria: 'Werkzeug', hand: 'Hand', brush: 'Pinsel', handTitle: 'Scherben greifen (Taste H)', brushTitle: 'Füllung von Hand auftragen (Taste P)',
+    autoFill: 'Füllung fließt von selbst', mendAll: 'Alles zusammenfügen', save: 'In Sammlung speichern', saved: 'Gespeichert',
+    shardsOf: '{a} von {b} Scherben', intact: 'noch unversehrt', filled: '{p} % gefüllt',
+    sound: 'Ton', soundOff: 'Ton aus', music: 'Musik', effects: 'Effekte', mute: 'Stumm',
+    collection: 'Sammlung', otherLang: 'English', langTitle: 'Sprache wechseln (switch language)',
+    pieceNameLabel: 'Name des Stücks', backStudio: 'Zurück ins Atelier', backList: 'Zur Sammlung',
+    explode: 'Scherben auseinanderziehen', spin: 'Langsam drehen', savePng: 'Bild speichern', deletePiece: 'Stück löschen',
+    import: 'Importieren', export: 'Exportieren', close: 'Schließen', del: 'Löschen',
+    galleryEmpty: 'Noch ist die Sammlung leer. Zerbrich ein Gefäß, füge es wieder zusammen und speichere es – dann kannst du es hier jederzeit einzeln ansehen.',
+    saveNote: 'Offene Fugen werden dabei gefüllt.', nameLabel: 'Name', cancel: 'Abbrechen', saveBtn: 'Speichern',
+    hCracking: 'Die Risse laufen …',
+    hStrike: 'Klick auf das Gefäß schlägt zu. Ziehen dreht die Ansicht, das Mausrad zoomt.',
+    hRebreak: 'Ein Klick auf das geflickte Gefäß zerschlägt es erneut entlang der Fugen.',
+    hGoMend: 'Wechsle zu „Zusammenfügen“, um die Scherben wieder zu verbinden.',
+    hNothing: 'Hier gibt es noch nichts zu flicken. Zerbrich das Gefäß zuerst.',
+    hInCollection: 'Das Stück liegt in deiner Sammlung.', hComplete: 'Vollendet. Speichere das Stück in deiner Sammlung.',
+    hBrushOpen: 'Alle Scherben sitzen. Streiche mit dem Pinsel über die dunklen Risse.', hCuring: 'Der Lack härtet aus …',
+    hBrush: 'Streiche mit dem Pinsel über die dunklen Risse zwischen eingesetzten Scherben.',
+    hHand: 'Zieh eine Scherbe an ihren Platz – oder klick sie an, dann findet sie ihn selbst.',
+    webgl: 'WebGL lässt sich in diesem Browser nicht starten. Bitte Hardwarebeschleunigung aktivieren oder einen anderen Browser verwenden.',
+    alreadySaved: 'Dieses Stück liegt schon in deiner Sammlung.', savedAs: '„{name}“ liegt jetzt in deiner Sammlung.',
+    savedTemp: 'Gespeichert – aber nur bis du die Seite schließt. Dieser Browser erlaubt hier keinen dauerhaften Speicher; nutze „Exportieren“.',
+    untitled: 'Ohne Titel', pieceNo: '{shape} Nr. {n}', vessel: 'Gefäß', meta: '{shape}, {glaze}, {fill}, {n} Scherben, {date}',
+    viewAria: '„{name}“ in der Vitrine ansehen', confirmDelete: '„{name}“ aus der Sammlung löschen?',
+    imported1: '1 Stück importiert.', importedN: '{n} Stücke importiert.', importedNone: 'Die Datei enthält keine neuen Stücke.',
+    importBad: 'Diese Datei ist keine Kintsugi-Sammlung (kein gültiges JSON).',
+    notPersistent: 'Dieser Browser speichert hier nicht dauerhaft. Sichere deine Stücke über „Exportieren“.',
+    dateLocale: 'de-DE'
+  }
+};
+let LANG = 'en';                                // Standardsprache
+try { const l = localStorage.getItem('kintsugi.lang'); if (l && I18N[l]) LANG = l; } catch (e) { /* Standard */ }
+const languageListeners = [];
+
+function t(key, vars) {
+  let s = I18N[LANG] && I18N[LANG][key];
+  if (s == null) s = I18N.en[key];
+  if (s == null) return key;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
+/** Registry-Name in der aktuellen Sprache (Text oder { en, de }). */
+function L(name) { return name && typeof name === 'object' ? (name[LANG] || name.en || name.de || '') : (name || ''); }
+function applyStaticTexts() {
+  document.documentElement.lang = LANG; document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+}
+function setLang(l) {
+  if (!I18N[l]) return;
+  LANG = l;
+  try { localStorage.setItem('kintsugi.lang', l); } catch (e) { /* gilt dann nur für diese Sitzung */ }
+  applyStaticTexts(); languageListeners.forEach(f => f());
+}
 
 /* ---------------------------------------------------------------- §3
  *  GEOMETRIE: Aus dem Außenprofil entsteht ein Rotationskörper mit
@@ -4790,7 +4937,7 @@ function fracture(grid, params) {
  *  zu glänzendem Gold aushärtet.
  * ------------------------------------------------------------------- */
 function buildSeamArrays(seams, th) {
-  const pos = [], nrm = [], side = [], hpos = [], hside = [], ptPos = [], ptDelay = [], index = [], hindex = [];
+  const pos = [], nrm = [], side = [], hpos = [], hside = [], ptPos = [], ptDelay = [], ptPartner = [], index = [], hindex = [];
   const ranges = [];
   const FLOW = 1.5;                         // Fließgeschwindigkeit des Lacks
   const W = clamp(th * 0.26, 0.012, 0.018), LIFT = 0.0032, HW = 0.085;
@@ -4798,6 +4945,7 @@ function buildSeamArrays(seams, th) {
   for (const s of seams) {
     const p0 = np; let maxDelay = 0;
     for (const line of s.lines) {
+      let oBase = -1;                      // Außen- und Innenseite derselben Bruchlinie werden als Paare gemerkt
       for (const sideKey of ['o', 'i']) {
         const nKey = sideKey === 'o' ? 'on' : 'inn';
         if (!line[0][sideKey]) continue;
@@ -4825,7 +4973,7 @@ function buildSeamArrays(seams, th) {
           hpos.push(c[0] - sx * HW + N_[0] * LIFT * 2.2, c[1] - sy * HW + N_[1] * LIFT * 2.2, c[2] - sz * HW + N_[2] * LIFT * 2.2,
             c[0] + sx * HW + N_[0] * LIFT * 2.2, c[1] + sy * HW + N_[1] * LIFT * 2.2, c[2] + sz * HW + N_[2] * LIFT * 2.2);
           hside.push(-1, 1);
-          ptPos.push(c[0], c[1], c[2]); ptDelay.push(arc / FLOW); maxDelay = Math.max(maxDelay, arc / FLOW);
+          ptPos.push(c[0], c[1], c[2]); ptPartner.push(-1); ptDelay.push(arc / FLOW); maxDelay = Math.max(maxDelay, arc / FLOW);
           if (k < n - 1) {
             const v = np * 3, h = np * 2;
             index.push(v, v + 1, v + 4, v, v + 4, v + 3, v + 1, v + 2, v + 5, v + 1, v + 5, v + 4);
@@ -4833,7 +4981,7 @@ function buildSeamArrays(seams, th) {
           }
           np++;
         }
-        void base;
+        if (sideKey === 'o') oBase = base; else if (oBase >= 0) for (let k = 0; k < n; k++) { ptPartner[oBase + k] = base + k; ptPartner[base + k] = oBase + k; }
       }
     }
     ranges.push({ a: s.a, b: s.b, p0, pn: np - p0, maxDelay });
@@ -4841,7 +4989,7 @@ function buildSeamArrays(seams, th) {
   return {
     position: new Float32Array(pos), normal: new Float32Array(nrm), side: new Float32Array(side),
     hposition: new Float32Array(hpos), hside: new Float32Array(hside),
-    index, hindex, ptPos: new Float32Array(ptPos), ptDelay: new Float32Array(ptDelay), ranges, count: np
+    index, hindex, ptPos: new Float32Array(ptPos), ptDelay: new Float32Array(ptDelay), ptPartner: new Int32Array(ptPartner), ranges, count: np
   };
 }
 
@@ -5084,16 +5232,24 @@ const Sound = (() => {
     if (!enabled && !brush) return;
     if (level > 0 && !brush) {
       if (!ensure()) return;
-      const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
-      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.55;
-      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 500;
+      // Pinselstrich: sehr tiefes, dunkles (braunes) Rauschen in einem schmalen Band, das in langsamen Zügen an- und abschwillt,
+      // dazu ein leiser, weicher Ton (D und A, passend zur Musik). So klingt es nach Streichen statt nach Rauschen.
+      const n = ctx.sampleRate * 4, buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0), fade = Math.floor(ctx.sampleRate * 0.05);
+      let last = 0;
+      for (let i = 0; i < n; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2 * Math.min(1, i / fade, (n - 1 - i) / fade); }
+      const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 430; bp.Q.value = 0.7;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 850; lp.Q.value = 0.3;
+      const strokes = ctx.createGain(); strokes.gain.value = 0.55;            // Züge: zwei langsame, ungleiche Schwingungen
+      [[0.62, 0.26], [1.47, 0.16]].forEach(([f, depth]) => { const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = f; lg.gain.value = depth; l.connect(lg); lg.connect(strokes.gain); l.start(); });
+      const tone = ctx.createGain(); tone.gain.value = 0.02;
+      [[293.66, 1], [440.6, 0.6], [587.9, 0.22]].forEach(([f, a]) => { const o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'sine'; o.frequency.value = f; og.gain.value = a; o.connect(og); og.connect(tone); o.start(); });
+      const trem = ctx.createOscillator(), tg = ctx.createGain(); trem.frequency.value = 0.33; tg.gain.value = 0.008; trem.connect(tg); tg.connect(tone.gain); trem.start();
       const g = ctx.createGain(); g.gain.value = 0;
-      const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 5.3; lg.gain.value = 420;
-      lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
-      src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(master); src.start();
+      src.connect(bp); bp.connect(lp); lp.connect(strokes); strokes.connect(g); tone.connect(g); g.connect(master); src.start();
       brush = { g };
     }
-    if (brush) brush.g.gain.setTargetAtTime(enabled ? clamp(level, 0, 1) * 0.11 : 0, ctx.currentTime, 0.07);
+    if (brush) brush.g.gain.setTargetAtTime(enabled ? clamp(level, 0, 1) * 0.5 : 0, ctx.currentTime, 0.22);   // weiches Ein- und Ausblenden
   }
 
   /* ---------- Hintergrundmusik ---------- */
@@ -5296,30 +5452,39 @@ function makeEnvironment(renderer) {
 /** Gold-, Glüh- und Geistermaterial. */
 function makeFx(timeUniform) {
   const crackColor = { value: new T.Color(0x070504) };     // Haarriss: dunkel auf heller, hell auf dunkler Glasur
-  const gold = new T.MeshStandardMaterial({ color: 0xffcb63, metalness: 1, roughness: 0.3, side: T.DoubleSide, envMapIntensity: 2.4 });
-  gold.onBeforeCompile = sh => {
-    sh.uniforms.uTime = timeUniform; sh.uniforms.uCrackColor = crackColor;
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aT0;\nattribute float aJoin;\nattribute float aSide;\nattribute float aCrack;\nuniform float uTime;\nvarying float vAge;\nvarying float vJoin;\nvarying float vSide;\nvarying float vCrack;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAge = uTime - aT0; vJoin = aJoin; vSide = aSide; vCrack = uTime - aCrack;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uCrackColor;\nvarying float vAge;\nvarying float vJoin;\nvarying float vSide;\nvarying float vCrack;')
-      .replace('#include <color_fragment>', [
-        '#include <color_fragment>',
-        'float kGold = step(0.0, vAge);',
-        'if (kGold < 0.5) { if (vJoin < 0.5 || abs(vSide) > 0.4 || vCrack < 0.0) discard; diffuseColor.rgb = uCrackColor; }',
-        'float kSpark = (1.0 - kGold) * exp(-max(vCrack, 0.0) * 11.0);',
-        'float kAge = max(vAge, 0.0);',
-        'float kGlow = kGold * exp(-kAge / 1.7);'].join('\n'))
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.9, mix(0.3, 0.07, kGlow), kGold);')
-      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = kGold;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.94, 0.82) * kSpark * 1.5 + kGold * (vec3(0.2, 0.125, 0.028) + vec3(1.0, 0.47, 0.08) * kGlow * 1.5 + vec3(1.0, 0.86, 0.55) * exp(-kAge * 6.0) * 2.4);');
-  };
-  const halo = new T.ShaderMaterial({
-    uniforms: { uTime: timeUniform }, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
-    vertexShader: 'attribute float aT0; attribute float aSide; uniform float uTime; varying float vAge; varying float vSide;\nvoid main(){ vAge = uTime - aT0; vSide = aSide; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'varying float vAge; varying float vSide;\nvoid main(){ if (vAge < 0.0) discard; float g = exp(-vAge / 1.25); float f = 1.0 - abs(vSide); f = f * f * f;\n gl_FragColor = vec4(vec3(1.0, 0.52, 0.12) * g * f * 0.9, 1.0);\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}'
-  });
+  // Füllmaterial der Fugen: ein Shader, die Eigenschaften (Gold, Silber, ...) kommen als Uniforms
+  const fills = new Map();
+  function fill(f) {
+    const def = (f && typeof f === 'object' ? (FILLS.get(f.id) || f) : FILLS.get(f)) || FILLS.get('gold');
+    if (fills.has(def.id)) return fills.get(def.id);
+    const vec = a => ({ value: new T.Vector3(a[0], a[1], a[2]) });
+    const U = { uBase: vec(def.base), uGlow: vec(def.glow), uFlash: vec(def.flash), uMetal: { value: def.metalness }, uRough: { value: def.roughness } };
+    const mat = new T.MeshStandardMaterial({ color: new T.Color(def.color), metalness: 1, roughness: 0.3, side: T.DoubleSide, envMapIntensity: def.env });
+    mat.onBeforeCompile = sh => {
+      sh.uniforms.uTime = timeUniform; sh.uniforms.uCrackColor = crackColor; Object.assign(sh.uniforms, U);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute float aT0;\nattribute float aJoin;\nattribute float aSide;\nattribute float aCrack;\nuniform float uTime;\nvarying float vAge;\nvarying float vJoin;\nvarying float vSide;\nvarying float vCrack;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAge = uTime - aT0; vJoin = aJoin; vSide = aSide; vCrack = uTime - aCrack;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform vec3 uCrackColor;\nuniform vec3 uBase;\nuniform vec3 uGlow;\nuniform vec3 uFlash;\nuniform float uMetal;\nuniform float uRough;\nvarying float vAge;\nvarying float vJoin;\nvarying float vSide;\nvarying float vCrack;')
+        .replace('#include <color_fragment>', [
+          '#include <color_fragment>',
+          'float kGold = step(0.0, vAge);',
+          'if (kGold < 0.5) { if (vJoin < 0.5 || abs(vSide) > 0.4 || vCrack < 0.0) discard; diffuseColor.rgb = uCrackColor; }',
+          'float kSpark = (1.0 - kGold) * exp(-max(vCrack, 0.0) * 11.0);',
+          'float kAge = max(vAge, 0.0);',
+          'float kGlow = kGold * exp(-kAge / 1.7);'].join('\n'))
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.9, mix(uRough, 0.07, kGlow), kGold);')
+        .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = kGold * uMetal;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.94, 0.82) * kSpark * 1.5 + kGold * (uBase + uGlow * kGlow * 1.5 + uFlash * exp(-kAge * 6.0) * 2.4);');
+    };
+    const halo = new T.ShaderMaterial({
+      uniforms: { uTime: timeUniform, uHalo: vec(def.halo) }, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
+      vertexShader: 'attribute float aT0; attribute float aSide; uniform float uTime; varying float vAge; varying float vSide;\nvoid main(){ vAge = uTime - aT0; vSide = aSide; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 uHalo; varying float vAge; varying float vSide;\nvoid main(){ if (vAge < 0.0) discard; float g = exp(-vAge / 1.25); float f = 1.0 - abs(vSide); f = f * f * f;\n gl_FragColor = vec4(uHalo * g * f * 0.9, 1.0);\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}'
+    });
+    const out = { mat, halo, def }; fills.set(def.id, out); return out;
+  }
   const ghostShader = (opacity) => new T.ShaderMaterial({
     uniforms: { uColor: { value: new T.Color(0xe8b85a) }, uOpacity: { value: opacity } },
     transparent: true, depthWrite: false, blending: T.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
@@ -5328,7 +5493,7 @@ function makeFx(timeUniform) {
   });
   // depthTest aus: die Scherbe unter dem Mauszeiger leuchtet auch durch davorliegende Teile hindurch
   const hover = new T.MeshBasicMaterial({ color: 0xffcf7a, transparent: true, opacity: 0.26, blending: T.AdditiveBlending, depthWrite: false, depthTest: false });
-  return { gold, halo, ghost: ghostShader(0.085), target: ghostShader(0.9), hover, crackColor };
+  return { fill, ghost: ghostShader(0.085), target: ghostShader(0.9), hover, crackColor };
 }
 
 /** Atelier: niedriger Holztisch im dunklen Studio. */
@@ -5694,7 +5859,7 @@ function roomShell(k, o) {
 
 /* ---------- Raum 1: Tokonoma ---------- */
 registerRoom({
-  id: 'tokonoma', name: 'Tokonoma (Lehmputz und Tatami)',
+  id: 'tokonoma', name: { de: 'Tokonoma (Lehmputz und Tatami)', en: 'Tokonoma (clay plaster and tatami)' },
   build(k) {
     const plaster = k.tex(paintPlaster('#a8946f', 11)), tatami = k.tex(paintTatami(3)), shoji = k.tex(paintShoji(5));
     const wallMat = k.basic({ map: plaster, vertexColors: true, side: T.DoubleSide });
@@ -5743,7 +5908,7 @@ registerRoom({
 
 /* ---------- Raum 2: Shoji-Wand ---------- */
 registerRoom({
-  id: 'shoji', name: 'Shoji-Wand (hell, durchleuchtet)',
+  id: 'shoji', name: { de: 'Shoji-Wand (hell, durchleuchtet)', en: 'Shoji wall (bright, backlit)' },
   build(k) {
     const plaster = k.tex(paintPlaster('#b3a27e', 13)), tatami = k.tex(paintTatami(4)), shoji = k.tex(paintShoji(6));
     const wallMat = k.basic({ map: plaster, vertexColors: true, side: T.DoubleSide });
@@ -5769,7 +5934,7 @@ registerRoom({
 
 /* ---------- Raum 3: Engawa bei Nacht ---------- */
 registerRoom({
-  id: 'engawa', name: 'Engawa bei Nacht (Garten und Mond)',
+  id: 'engawa', name: { de: 'Engawa bei Nacht (Garten und Mond)', en: 'Engawa at night (garden and moon)' },
   build(k) {
     const plaster = k.tex(paintPlaster('#9a8763', 17)), tatami = k.tex(paintTatami(8)), shoji = k.tex(paintShoji(9)), glow = k.tex(paintGlow(0));
     const wallMat = k.basic({ map: plaster, vertexColors: true, side: T.DoubleSide });
@@ -6059,7 +6224,7 @@ const Showcase = (() => {
     geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('normal', new T.BufferAttribute(nrm, 3)); geo.setAttribute('uv', new T.BufferAttribute(uv, 2));
     geo.addGroup(0, nO, 0); geo.addGroup(nO, nI, 1); geo.computeBoundingSphere();
     const mesh = new T.Mesh(geo, [M.mats[0], M.mats[1]]); mesh.userData.entry = entry;
-    const seams = createSeamSystem(res.seams, grid.th); seams.fillAll(-1e4); seams.commit();
+    const seams = createSeamSystem(res.seams, grid.th, entry.fill); seams.fillAll(-1e4); seams.commit();
     const group = new T.Group(); group.add(mesh, seams.group);
     return { group, mesh, grid, dispose() { geo.dispose(); seams.dispose(); M.dispose(); group.removeFromParent(); } };
   }
@@ -6110,10 +6275,11 @@ const App = {
   view: 'studio',          // 'studio' | 'vitrine'
   mode: 'break',           // 'break' | 'mend'
   tool: 'hand',            // 'hand' | 'brush'
-  autoGold: true, autoAll: false, force: 0.55,
+  autoGold: false,         // Füllung fließt von selbst? Standard: aus, man trägt sie mit dem Pinsel auf
+  autoAll: false, force: 0.55, started: false,
   breakTempo: 0.5,         // Zeitlupe im Moment des Bruchs: 0.1 = sehr langsam, 1 = Echtzeit
   crackTime: 0.75,         // Sekunden, in denen sich die Risse vom Bruchpunkt aus ausbreiten, bevor das Gefäß zerfällt
-  shapeId: 'chawan', glazeId: 'seladon', roomId: 'tokonoma', exposure: 1.08,
+  shapeId: 'chawan', glazeId: 'seladon', fillId: 'gold', roomId: 'tokonoma', exposure: 1.08,
   time: 0, vessel: null, flowUntil: 0, brushSpeed: 0, clinks: 0
 };
 const timeUniform = { value: 0 };
@@ -6141,7 +6307,7 @@ class Shard extends Body {
 }
 
 /** Goldfugen eines Bruchs als steuerbares Objekt. */
-function createSeamSystem(seams, th) {
+function createSeamSystem(seams, th, fill) {
   const A = buildSeamArrays(seams, th), n = A.count;
   const geo = new T.BufferGeometry();
   geo.setAttribute('position', new T.BufferAttribute(A.position, 3));
@@ -6156,7 +6322,7 @@ function createSeamSystem(seams, th) {
   hgeo.setAttribute('aSide', new T.BufferAttribute(A.hside, 1));
   const hT0 = new T.BufferAttribute(new Float32Array(n * 2).fill(1e9), 1); hT0.setUsage(T.DynamicDrawUsage);
   hgeo.setAttribute('aT0', hT0); hgeo.setIndex(A.hindex);
-  const mesh = new T.Mesh(geo, FX.gold), halo = new T.Mesh(hgeo, FX.halo);
+  const fm = FX.fill(fill), mesh = new T.Mesh(geo, fm.mat), halo = new T.Mesh(hgeo, fm.halo);
   mesh.frustumCulled = false; halo.frustumCulled = false; halo.renderOrder = 3; mesh.receiveShadow = true;
   const group = new T.Group(); group.add(mesh, halo);
   const t0 = new Float32Array(n).fill(1e9), joined = new Uint8Array(A.ranges.length);
@@ -6168,6 +6334,8 @@ function createSeamSystem(seams, th) {
   };
   return {
     group, ranges: A.ranges, count: n,
+    /** Füllmaterial wechseln (Gold, Silber, ...) */
+    setFill(f) { const m = FX.fill(f); mesh.material = m.mat; halo.material = m.halo; },
     isJoined: ri => joined[ri] === 1,
     setJoined: setJoin,
     /** Lack fließt die Fuge entlang. Gibt die Dauer zurück. */
@@ -6180,11 +6348,17 @@ function createSeamSystem(seams, th) {
         for (let p = r.p0; p < r.p0 + r.pn; p++) {
           if (t0[p] < 1e8) continue;
           const d2 = (P[p * 3] - lp.x) ** 2 + (P[p * 3 + 1] - lp.y) ** 2 + (P[p * 3 + 2] - lp.z) ** 2;
-          if (d2 < r2) { setT0(p, now + Math.sqrt(d2) * 0.3); hit++; }
+          if (d2 < r2) {
+            const tt = now + Math.sqrt(d2) * 0.3, q = A.ptPartner[p]; setT0(p, tt); hit++;
+            if (q >= 0 && t0[q] > 1e8) { setT0(q, tt); hit++; }       // die gegenüberliegende Seite (innen/außen) wird immer mitgefüllt
+          }
         }
       }
       return hit;
     },
+    /** Zahl der Punkte, deren Gegenseite anders gefüllt ist (sollte 0 sein) */
+    mismatch() { let c = 0; for (let p = 0; p < n; p++) { const q = A.ptPartner[p]; if (q >= 0 && (t0[p] < 1e8) !== (t0[q] < 1e8)) c++; } return c; },
+    filledCount() { let c = 0; for (let p = 0; p < n; p++) if (t0[p] < 1e8) c++; return c; },
     reset() { for (let p = 0; p < n; p++) setT0(p, 1e9); for (let ri = 0; ri < A.ranges.length; ri++) setJoin(ri, false); aCrack.array.fill(-1e9); aCrack.needsUpdate = true; },
     /** Risse zeichnen sich ab: von lp (Gefäßkoordinaten) aus laufen sie in dur Sekunden bis zum fernsten Punkt. */
     crackFrom(lp, now, dur) {
@@ -6233,7 +6407,7 @@ function createVessel(shape, glaze, seed) {
   const whole = fracture(grid, { count: 1, seed: 1 }).shards[0];
   const intact = new Shard(whole, -1, M.mats);
   intact.pos.copy(intact.home); intact.sync(); studio.vesselGroup.add(intact.mesh);
-  App.vessel = { shape, glaze, seed, grid, M, intact, shards: [], seams: null, fractured: false, cracking: null, params: null, assembled: false, complete: false, shatterT: 0, saved: false };
+  App.vessel = { shape, glaze, fill: FILLS.get(App.fillId) || FILLS.get('gold'), seed, grid, M, intact, shards: [], seams: null, fractured: false, cracking: null, params: null, assembled: false, complete: false, shatterT: 0, saved: false };
   setCrackColor(glaze);
   studio.ghost.geometry = intact.mesh.geometry; studio.ghost.position.copy(intact.home);
   const size = Math.max(grid.rmax, grid.H);
@@ -6243,6 +6417,12 @@ function createVessel(shape, glaze, seed) {
 function setCrackColor(glaze) {
   const c = hexRGB(glaze.base), lum = (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
   FX.crackColor.value.set(lum < 0.3 ? 0xd9c9b2 : 0x070504);
+}
+function applyFill(fill) {
+  const v = App.vessel; if (!v) return;
+  v.fill = fill; v.saved = false;
+  if (v.seams) v.seams.setFill(fill);
+  refreshUI();
 }
 function newVessel() {
   createVessel(SHAPES.get(App.shapeId), GLAZES.get(App.glazeId), (Math.random() * 0x7fffffff) | 0);
@@ -6285,7 +6465,7 @@ function beginCrack(impactWorld, dirWorld, force) {
   v.params = { count, seed: (Math.random() * 0x7fffffff) | 0, impact: [local.x, local.y, local.z] };
   const res = fracture(v.grid, v.params);
   if (v.seams) v.seams.dispose();
-  v.seams = createSeamSystem(res.seams, v.grid.th); studio.mendGroup.add(v.seams.group);
+  v.seams = createSeamSystem(res.seams, v.grid.th, v.fill); studio.mendGroup.add(v.seams.group);
   const dur = Math.max(0.05, App.crackTime);
   v.seams.crackFrom(local, App.time, dur * 0.9);       // die letzten 10 % steht das Rissbild, dann zerfällt es
   v.cracking = { res, local, dir: dirWorld.clone(), force, t0: App.time, dur };
@@ -6356,11 +6536,11 @@ function mendAll() {
   const v = App.vessel; if (!v || !v.fractured) return;
   const loose = v.shards.filter(s => s.state === 'loose').sort((a, b) => a.home.y - b.home.y || Math.atan2(a.home.z, a.home.x) - Math.atan2(b.home.z, b.home.x));
   if (!loose.length) { if (v.seams.openCount()) { v.seams.ranges.forEach((r, ri) => { if (v.seams.isJoined(ri)) App.flowUntil = Math.max(App.flowUntil, App.time + v.seams.flow(ri, App.time)); }); } return; }
-  App.autoAll = true;
+  App.autoAll = App.autoGold;              // ohne Automatik werden die Scherben nur gesetzt, die Fugen bleiben offen
   const step = clamp(4.5 / loose.length, 0.07, 0.28);
   loose.forEach((s, i) => { s.flyAt = App.time + i * step; });
-  // schon gefügte, aber noch offene Fugen ebenfalls vergolden
-  v.seams.ranges.forEach((r, ri) => { if (v.seams.isJoined(ri)) App.flowUntil = Math.max(App.flowUntil, App.time + v.seams.flow(ri, App.time)); });
+  // schon gefügte, aber noch offene Fugen ebenfalls füllen
+  if (App.autoGold) v.seams.ranges.forEach((r, ri) => { if (v.seams.isJoined(ri)) App.flowUntil = Math.max(App.flowUntil, App.time + v.seams.flow(ri, App.time)); });
 }
 
 /** Arbeitsfläche freihalten: lose Scherben rutschen aus dem Bereich, in dem das Gefäß entsteht —
@@ -6463,11 +6643,37 @@ function setHover(s) {
   if (h.userData.shard === s) return;
   h.geometry = s.mesh.geometry; s.mesh.add(h); h.userData.shard = s;
 }
-function setCursor(c) { renderer.domElement.style.cursor = c || (App.view === 'studio' && App.mode === 'mend' && App.tool === 'brush' ? 'crosshair' : 'default'); }
+/* Eigene Mauszeiger als eingebettete SVGs: Hammer zum Zerbrechen, Pinsel zum Auftragen.
+ * Die beiden Zahlen sind der „heiße Punkt" (Schlagfläche bzw. Pinselspitze). */
+const svgCursor = (svg, x, y, fallback) => 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' + svg + '</svg>') + '") ' + x + ' ' + y + ', ' + fallback;
+const CURSOR = {
+  hammer: svgCursor('<g transform="rotate(-45 16 16)" stroke-linejoin="round">'
+    + '<g fill="none" stroke="#fff" stroke-width="3.4"><rect x="14.4" y="11" width="3.2" height="19" rx="1.2"/><rect x="8" y="4" width="16" height="8" rx="1.6"/></g>'
+    + '<rect x="14.4" y="11" width="3.2" height="19" rx="1.2" fill="#b98a55" stroke="#2a1c12" stroke-width="1.1"/>'
+    + '<rect x="8" y="4" width="16" height="8" rx="1.6" fill="#cdd2d9" stroke="#1d1a18" stroke-width="1.1"/>'
+    + '<rect x="8" y="4" width="3.6" height="8" rx="1.2" fill="#8b919a" stroke="#1d1a18" stroke-width="1.1"/></g>', 5, 16, 'pointer'),
+  brush: svgCursor('<g transform="rotate(45 16 16)" stroke-linejoin="round">'
+    + '<g fill="none" stroke="#fff" stroke-width="3.2"><rect x="14.2" y="1" width="3.6" height="17" rx="1.2"/><path d="M13.6 20.5Q13.2 26 16 31Q18.8 26 18.4 20.5Z"/></g>'
+    + '<rect x="14.2" y="1" width="3.6" height="17" rx="1.2" fill="#c9a567" stroke="#2a1c12" stroke-width="1"/>'
+    + '<rect x="13.6" y="17.5" width="4.8" height="3" fill="#4a3020" stroke="#2a1c12" stroke-width="1"/>'
+    + '<path d="M13.6 20.5Q13.2 26 16 31Q18.8 26 18.4 20.5Z" fill="#1d1a18" stroke="#1d1a18" stroke-width="1"/>'
+    + '<path d="M14.8 27Q15.4 29.3 16 31Q16.6 29.3 17.2 27Z" fill="#e6bd62"/></g>', 5, 27, 'crosshair')
+};
+function setCursor(c) {
+  if (!c) c = App.view !== 'studio' ? 'default' : App.mode === 'break' ? CURSOR.hammer : App.tool === 'brush' ? CURSOR.brush : 'default';
+  renderer.domElement.style.cursor = c;
+}
 
+const BRUSH_R = 0.07;                       // Radius des Pinsels (der Ring zeigt genau diese Fläche)
+let lastBrush = null;
 function paintAt(hit, speed) {
-  const v = App.vessel;
-  const n = v.seams.paint(hit.point, 0.14, App.time);
+  const v = App.vessel; let n = 0;
+  if (lastBrush) {                          // zwischen zwei Mauspositionen lückenlos auftragen
+    const d = lastBrush.distanceTo(hit.point);
+    if (d < 0.45) for (let s = 1, steps = Math.ceil(d / (BRUSH_R * 0.7)); s < steps; s++) n += v.seams.paint(_v3.lerpVectors(lastBrush, hit.point, s / steps), BRUSH_R, App.time);
+  }
+  n += v.seams.paint(hit.point, BRUSH_R, App.time);
+  (lastBrush || (lastBrush = new T.Vector3())).copy(hit.point);
   App.brushSpeed = Math.max(App.brushSpeed, clamp(0.25 + speed * 0.02, 0.25, 1));
   if (n) scheduleProgress();
   // Pinselring auf die Oberfläche legen
@@ -6497,7 +6703,7 @@ function bindPointer() {
         if (hit) { ptr.intent = 'shard'; ptr.shard = hit.shard; setCursor('grabbing'); }
       } else {
         const hit = pickShard(e, s => s.state === 'placed');
-        if (hit) { ptr.intent = 'brush'; paintAt(hit, 0); }
+        if (hit) { ptr.intent = 'brush'; lastBrush = null; paintAt(hit, 0); }
       }
     }
   });
@@ -6532,7 +6738,7 @@ function bindPointer() {
       }
     } else if (ptr.intent === 'brush') {
       const hit = pickShard(e, s => s.state === 'placed');
-      if (hit) paintAt(hit, Math.hypot(dx, dy)); else studio.brushRing.visible = false;
+      if (hit) paintAt(hit, Math.hypot(dx, dy)); else { studio.brushRing.visible = false; lastBrush = null; }
     }
   });
   const up = e => {
@@ -6546,7 +6752,7 @@ function bindPointer() {
       else if (p.shard.state === 'loose') { beginFly(p.shard, 0.78); }
       setCursor(); return;
     }
-    if (p.intent === 'brush') { studio.brushRing.visible = false; return; }
+    if (p.intent === 'brush') { studio.brushRing.visible = false; lastBrush = null; return; }
     if (!p.moved && p.button === 0 && performance.now() - p.t0 < 600 && App.view === 'studio') handleClick(e);
   };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
@@ -6580,10 +6786,10 @@ function updateHover() {
   const v = App.vessel; if (!v) return;
   if (App.mode === 'mend' && v.fractured) {
     if (App.tool === 'hand') { const hit = pickShard(e, s => s.state === 'loose'); setHover(hit ? hit.shard : null); setCursor(hit ? 'grab' : Showcase.pick(raycaster, [studio.table]) ? 'pointer' : 'default'); }
-    else { setHover(null); setCursor('crosshair'); }
+    else { setHover(null); setCursor(); }
   } else {
     setHover(null);
-    const hit = pickShard(e, () => true); setCursor(hit || Showcase.pick(raycaster, [studio.table]) ? 'pointer' : 'default');
+    const hit = pickShard(e, () => true); setCursor(!hit && Showcase.pick(raycaster, [studio.table]) ? 'pointer' : null);   // sonst Hammer bzw. Standard
   }
 }
 
@@ -6608,45 +6814,55 @@ function refreshUI() {
   $('toolHand').setAttribute('aria-pressed', String(App.tool === 'hand')); $('toolBrush').setAttribute('aria-pressed', String(App.tool === 'brush'));
   const placed = v.shards.filter(s => s.state === 'placed').length, total = v.shards.length;
   const gold = v.seams ? v.seams.progress(App.time) : 0;
-  $('progShards').textContent = frac ? placed + ' von ' + total + ' Scherben' : 'noch unversehrt';
+  $('progShards').textContent = frac ? t('shardsOf', { a: placed, b: total }) : t('intact');
   $('progGold').style.width = Math.round(gold * 100) + '%';
-  $('progGoldText').textContent = frac ? Math.round(gold * 100) + ' % vergoldet' : '';
+  $('progGoldText').textContent = frac ? t('filled', { p: Math.round(gold * 100) }) : '';
   $('mendAll').disabled = !frac || (v.assembled && !v.seams.openCount());
   $('save').disabled = !v.assembled;
-  $('save').textContent = v.saved ? 'Gespeichert' : 'In Sammlung speichern';
+  $('save').textContent = v.saved ? t('saved') : t('save');
   document.body.classList.toggle('is-complete', !!v.complete);
   if (performance.now() > toastUntil) $('hint').textContent = hintText();
 }
 function hintText() {
   const v = App.vessel;
   if (App.mode === 'break') {
-    if (v.cracking) return 'Die Risse laufen …';
-    if (!v.fractured) return 'Klick auf das Gefäß schlägt zu. Ziehen dreht die Ansicht, das Mausrad zoomt.';
-    if (v.assembled) return 'Ein Klick auf das geflickte Gefäß zerschlägt es erneut entlang der Fugen.';
-    return 'Wechsle zu „Zusammenfügen“, um die Scherben mit Gold zu verbinden.';
+    if (v.cracking) return t('hCracking');
+    if (!v.fractured) return t('hStrike');
+    if (v.assembled) return t('hRebreak');
+    return t('hGoMend');
   }
-  if (!v.fractured) return 'Hier gibt es noch nichts zu flicken. Zerbrich das Gefäß zuerst.';
-  if (v.complete) return v.saved ? 'Das Stück liegt in deiner Sammlung.' : 'Vollendet. Speichere das Stück in deiner Sammlung.';
-  if (v.assembled) return v.seams.openCount() ? 'Alle Scherben sitzen. Streiche mit dem Pinsel über die dunklen Risse.' : 'Der Lack härtet aus …';
-  if (App.tool === 'brush') return 'Streiche mit dem Pinsel über die dunklen Risse zwischen eingesetzten Scherben.';
-  return 'Zieh eine Scherbe an ihren Platz – oder klick sie an, dann findet sie ihn selbst.';
+  if (!v.fractured) return t('hNothing');
+  if (v.complete) return v.saved ? t('hInCollection') : t('hComplete');
+  if (v.assembled) return v.seams.openCount() ? t('hBrushOpen') : t('hCuring');
+  if (App.tool === 'brush') return t('hBrush');
+  return t('hHand');
 }
 function fillSelects() {
   const sel = $('shape'), cur = App.shapeId; sel.textContent = '';
-  for (const s of SHAPES.values()) { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); }
+  for (const s of SHAPES.values()) { const o = document.createElement('option'); o.value = s.id; o.textContent = L(s.name); sel.appendChild(o); }
   sel.value = SHAPES.has(cur) ? cur : sel.options[0].value;
   const box = $('glazes'); box.textContent = '';
   for (const g of GLAZES.values()) {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'swatch'; b.title = g.name; b.setAttribute('aria-label', 'Glasur ' + g.name);
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'swatch'; b.title = L(g.name); b.setAttribute('aria-label', t('glazeAria', { name: L(g.name) }));
     b.setAttribute('aria-pressed', String(g.id === App.glazeId));
     b.style.background = 'radial-gradient(circle at 35% 30%, ' + mixHex(g.base, '#ffffff', 0.35) + ', ' + g.base + ' 45%, ' + g.pool + ')';
     b.style.setProperty('--rim', g.brk);
     b.addEventListener('click', () => { App.glazeId = g.id; applyGlaze(g); fillSelects(); });
     box.appendChild(b);
   }
-  $('glazeName').textContent = (GLAZES.get(App.glazeId) || {}).name || '';
+  $('glazeName').textContent = L((GLAZES.get(App.glazeId) || {}).name);
+  const fb = $('fills'); fb.textContent = '';
+  for (const f of FILLS.values()) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'swatch'; b.title = L(f.name); b.setAttribute('aria-label', t('fillAria', { name: L(f.name) }));
+    b.setAttribute('aria-pressed', String(f.id === App.fillId));
+    b.style.background = 'linear-gradient(135deg, ' + mixHex(f.color, '#ffffff', f.metalness ? 0.55 : 0.2) + ', ' + f.color + ' 45%, ' + mixHex(f.color, '#000000', 0.45) + ')';
+    b.style.setProperty('--rim', mixHex(f.color, '#000000', 0.35));
+    b.addEventListener('click', () => { App.fillId = f.id; applyFill(f); fillSelects(); });
+    fb.appendChild(b);
+  }
+  $('fillName').textContent = L((FILLS.get(App.fillId) || {}).name);
   const rs = $('room'); rs.textContent = '';
-  for (const r of ROOMS.values()) { const o = document.createElement('option'); o.value = r.id; o.textContent = r.name; rs.appendChild(o); }
+  for (const r of ROOMS.values()) { const o = document.createElement('option'); o.value = r.id; o.textContent = L(r.name); rs.appendChild(o); }
   rs.value = App.roomId;
 }
 function bindUI() {
@@ -6660,7 +6876,10 @@ function bindUI() {
   $('drop').addEventListener('click', () => { Sound.ensure(); dropVessel(); });
   $('toolHand').addEventListener('click', () => setTool('hand'));
   $('toolBrush').addEventListener('click', () => setTool('brush'));
+  $('autoGold').checked = App.autoGold;
   $('autoGold').addEventListener('change', e => { App.autoGold = e.target.checked; });
+  // Startbild: erst nach „Start" erscheint die Bedienung (der Klick startet zugleich den Ton)
+  $('startBtn').addEventListener('click', () => { App.started = true; document.body.classList.remove('view-start'); Sound.ensure(); renderer.domElement.focus(); setCursor(); });
   $('mendAll').addEventListener('click', () => { Sound.ensure(); mendAll(); });
   // Ton: Musik und Effekte getrennt regelbar
   const syncAudio = () => {
@@ -6668,7 +6887,7 @@ function bindUI() {
     $('musicVol').value = s.musicVol; $('sfxVol').value = s.sfxVol;
     $('musicMute').setAttribute('aria-pressed', String(s.musicMute)); $('sfxMute').setAttribute('aria-pressed', String(s.sfxMute));
     $('musicRow').classList.toggle('muted', s.musicMute); $('sfxRow').classList.toggle('muted', s.sfxMute);
-    $('audioBtn').textContent = s.musicMute && s.sfxMute ? 'Ton aus' : 'Ton';
+    $('audioBtn').textContent = s.musicMute && s.sfxMute ? t('soundOff') : t('sound');
   };
   const audioOpen = on => { $('audioPanel').hidden = !on; $('audioBtn').setAttribute('aria-expanded', String(on)); };
   $('audioBtn').addEventListener('click', () => audioOpen($('audioPanel').hidden));
@@ -6680,12 +6899,16 @@ function bindUI() {
   window.addEventListener('pointerdown', e => { Sound.ensure(); if (!e.target.closest('.audio')) audioOpen(false); }, true);   // erste Berührung startet den Ton
   window.addEventListener('keydown', () => Sound.ensure(), true);
   syncAudio();
+  // Sprache: Englisch ist Standard, der Knopf nennt die jeweils andere Sprache
+  $('langBtn').addEventListener('click', () => setLang(LANG === 'en' ? 'de' : 'en'));
+  languageListeners.push(() => { fillSelects(); syncAudio(); refreshUI(); Gallery.relabel(); });
+  applyStaticTexts();
   $('save').addEventListener('click', () => Gallery.askSave());
   window.addEventListener('keydown', e => {
     if (e.target.matches('input, select, textarea')) return;
     const k = e.key.toLowerCase();
     if (k === 'escape') { $('audioPanel').hidden = true; $('audioBtn').setAttribute('aria-expanded', 'false'); setTimeout(() => Gallery.escape(), 0); return; }   // verzögert, sonst schließt dieselbe Taste den Dialog sofort wieder
-    if (App.view !== 'studio' || $('gallery').open) return;
+    if (!App.started || App.view !== 'studio' || $('gallery').open) return;
     if (k === 'b') setMode('break'); else if (k === 'k') setMode('mend'); else if (k === 'n') newVessel();
     else if (k === 'h') { setMode('mend'); setTool('hand'); } else if (k === 'p') { setMode('mend'); setTool('brush'); }
     else if (k === 'a' && App.mode === 'mend') mendAll(); else if (k === 'f' && App.mode === 'break') dropVessel();
@@ -6707,6 +6930,7 @@ function frame(tms) {
   if (perfN >= 50) { if (perfAcc / perfN > 0.03 && pixelRatio > 1) { pixelRatio = Math.max(1, pixelRatio - 0.25); renderer.setPixelRatio(pixelRatio); resize(); } perfAcc = 0; perfN = 0; }
   const studioView = App.view === 'studio';
   if (studioView) updateHover();
+  if (!App.started) orbit.goal.theta += dt * 0.07;       // hinter dem Startbild dreht sich die Szene langsam
   for (let r = 0; r < (App.simSteps || 1); r++) {          // simSteps > 1 = Zeitraffer (für Tests)
     App.time += dt; timeUniform.value = App.time;
     if (studioView) updateStudio(dt); else Gallery.update(dt);
@@ -6719,7 +6943,7 @@ function frame(tms) {
 function init() {
   const canvas = $('stage');
   try { renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
-  catch (e) { $('hint').textContent = 'WebGL lässt sich in diesem Browser nicht starten. Bitte Hardwarebeschleunigung aktivieren oder einen anderen Browser verwenden.'; return; }
+  catch (e) { applyStaticTexts(); $('hint').textContent = t('webgl'); return; }
   pixelRatio = Math.min(window.devicePixelRatio || 1, 2); renderer.setPixelRatio(pixelRatio);
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08; renderer.outputColorSpace = T.SRGBColorSpace;
@@ -6730,7 +6954,7 @@ function init() {
   studio.ghost = new T.Mesh(new T.BufferGeometry(), FX.ghost); studio.ghost.visible = false; studio.ghost.renderOrder = 2; studio.mendGroup.add(studio.ghost);
   studio.target = new T.Mesh(new T.BufferGeometry(), FX.target); studio.target.visible = false; studio.target.renderOrder = 4; studio.mendGroup.add(studio.target);
   studio.hover = new T.Mesh(new T.BufferGeometry(), FX.hover); studio.hover.renderOrder = 5;
-  studio.brushRing = new T.Mesh(new T.RingGeometry(0.125, 0.14, 48), new T.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.85, side: T.DoubleSide, depthTest: false }));
+  studio.brushRing = new T.Mesh(new T.RingGeometry(BRUSH_R - 0.012, BRUSH_R, 40), new T.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.85, side: T.DoubleSide, depthTest: false }));
   studio.brushRing.visible = false; studio.brushRing.renderOrder = 6; studio.scene.add(studio.brushRing);
   orbit = createOrbit(studio.camera, { theta: 0.55, phi: 1.15, radius: 6.2, target: new T.Vector3(0, 0.4, 0), minR: 2.4, maxR: 11.5 });
   vorbit = createOrbit(vitrine.camera, { theta: 0.5, phi: 1.2, radius: 6, target: new T.Vector3(0, 0.5, 0), minR: 1.8, maxR: 12 });
@@ -6779,7 +7003,7 @@ const Gallery = (() => {
       s.dir = s.home.clone().sub(center); if (s.dir.lengthSq() < 1e-6) s.dir.set(0, -0.5, 0);
       group.add(s.mesh); return s;
     });
-    const seams = createSeamSystem(res.seams, grid.th); seams.fillAll(-1e4); seams.commit(); group.add(seams.group);
+    const seams = createSeamSystem(res.seams, grid.th, entry.fill); seams.fillAll(-1e4); seams.commit(); group.add(seams.group);
     return { group, shards, seams, grid, dispose() { shards.forEach(s => s.dispose()); seams.dispose(); M.dispose(); group.removeFromParent(); } };
   }
   function show(entry) {
@@ -6807,30 +7031,32 @@ const Gallery = (() => {
   /* ----- Speichern ----- */
   function askSave() {
     const v = App.vessel; if (!v || !v.assembled) return;
-    if (v.saved) { toast('Dieses Stück liegt schon in deiner Sammlung.'); return; }
-    $('saveName').value = v.shape.name.split(' (')[0] + ' Nr. ' + (items.length + 1);
+    if (v.saved) { toast(t('alreadySaved')); return; }
+    $('saveName').value = t('pieceNo', { shape: L(v.shape.name).split(' (')[0], n: items.length + 1 });
     $('saveDialog').showModal(); $('saveName').select();
   }
   function confirmSave() {
     const v = App.vessel; if (!v || !v.assembled) return;
-    const name = $('saveName').value.trim() || 'Ohne Titel';
+    const name = $('saveName').value.trim() || t('untitled');
     v.seams.fillAll(App.time); v.seams.commit();       // offene Fugen werden beim Speichern vergoldet
     const entry = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name, date: new Date().toISOString(),
-      shape: JSON.parse(JSON.stringify(v.shape)), glaze: JSON.parse(JSON.stringify(v.glaze)),
+      shape: JSON.parse(JSON.stringify(v.shape)), glaze: JSON.parse(JSON.stringify(v.glaze)), fill: JSON.parse(JSON.stringify(v.fill)),
       seed: v.seed, fracture: JSON.parse(JSON.stringify(v.params)), shards: v.shards.length
     };
     entry.thumb = thumb(entry);
     items.unshift(entry); v.saved = true;
     const ok = persist();
     renderList();
-    toast(ok ? '„' + name + '“ liegt jetzt in deiner Sammlung.' : 'Gespeichert – aber nur bis du die Seite schließt. Dieser Browser erlaubt hier keinen dauerhaften Speicher; nutze „Exportieren“.');
+    toast(ok ? t('savedAs', { name }) : t('savedTemp'));
   }
 
   /* ----- Liste ----- */
   function metaText(e) {
     const d = new Date(e.date);
-    return (e.shape.name || 'Gefäß') + ', ' + (e.glaze.name || 'Glasur') + ', ' + e.shards + ' Scherben, ' + (isNaN(d) ? '' : d.toLocaleDateString('de-DE'));
+    // Namen bevorzugt aus der Registry (dort zweisprachig); sonst der mitgespeicherte Name
+    const nm = (reg, x, fb) => L(((x && reg.get(x.id)) || x || {}).name) || fb;
+    return t('meta', { shape: nm(SHAPES, e.shape, t('vessel')), glaze: nm(GLAZES, e.glaze, t('glaze')), fill: nm(FILLS, e.fill || { id: 'gold' }, 'Gold'), n: e.shards, date: isNaN(d) ? '' : d.toLocaleDateString(t('dateLocale')) });
   }
   function renderList() {
     Showcase.refresh();                        // Wandvitrine im Atelier nachführen
@@ -6840,18 +7066,18 @@ const Gallery = (() => {
     $('exportAll').disabled = !items.length;
     for (const e of items) {
       const card = document.createElement('article'); card.className = 'card';
-      const open = document.createElement('button'); open.type = 'button'; open.className = 'card-open'; open.setAttribute('aria-label', e.name + ' in der Vitrine ansehen');
+      const open = document.createElement('button'); open.type = 'button'; open.className = 'card-open'; open.setAttribute('aria-label', t('viewAria', { name: e.name }));
       if (e.thumb) { const img = document.createElement('img'); img.src = e.thumb; img.alt = ''; open.appendChild(img); }
       const h = document.createElement('h3'); h.textContent = e.name;
       const m = document.createElement('p'); m.textContent = metaText(e);
-      const del = document.createElement('button'); del.type = 'button'; del.className = 'quiet'; del.textContent = 'Löschen';
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'quiet'; del.textContent = t('del');
       open.addEventListener('click', () => openVitrine(e));
       del.addEventListener('click', () => remove(e));
       card.append(open, h, m, del); list.appendChild(card);
     }
   }
   function remove(e) {
-    if (!window.confirm('„' + e.name + '“ aus der Sammlung löschen?')) return false;
+    if (!window.confirm(t('confirmDelete', { name: e.name }))) return false;
     items = items.filter(x => x !== e); persist(); renderList(); return true;
   }
 
@@ -6894,15 +7120,15 @@ const Gallery = (() => {
         const ids = new Set(items.map(x => x.id)); let n = 0;
         for (const e of arr) if (!ids.has(e.id)) { items.push(e); n++; }
         persist(); renderList();
-        $('galleryNote').textContent = n ? n + (n === 1 ? ' Stück importiert.' : ' Stücke importiert.') : 'Die Datei enthält keine neuen Stücke.';
-      } catch (err) { $('galleryNote').textContent = 'Diese Datei ist keine Kintsugi-Sammlung (kein gültiges JSON).'; }
+        $('galleryNote').textContent = n ? (n === 1 ? t('imported1') : t('importedN', { n })) : t('importedNone');
+      } catch (err) { $('galleryNote').textContent = t('importBad'); }
     };
     fr.readAsText(file);
   }
 
   function init() {
     load(); renderList();
-    $('openGallery').addEventListener('click', () => { $('galleryNote').textContent = persistent ? '' : 'Dieser Browser speichert hier nicht dauerhaft. Sichere deine Stücke über „Exportieren“.'; $('gallery').showModal(); });
+    $('openGallery').addEventListener('click', () => { $('galleryNote').textContent = persistent ? '' : t('notPersistent'); $('gallery').showModal(); });
     $('closeGallery').addEventListener('click', () => $('gallery').close());
     $('saveForm').addEventListener('submit', e => { e.preventDefault(); $('saveDialog').close(); confirmSave(); });
     $('saveCancel').addEventListener('click', () => $('saveDialog').close());
@@ -6911,24 +7137,27 @@ const Gallery = (() => {
     $('importFile').addEventListener('change', e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
     $('backStudio').addEventListener('click', () => closeVitrine(false));
     $('backList').addEventListener('click', () => closeVitrine(true));
-    $('pieceName').addEventListener('change', e => { if (!current) return; current.name = e.target.value.trim() || 'Ohne Titel'; e.target.value = current.name; persist(); renderList(); });
+    $('pieceName').addEventListener('change', e => { if (!current) return; current.name = e.target.value.trim() || t('untitled'); e.target.value = current.name; persist(); renderList(); });
     $('explode').addEventListener('input', e => { explodeGoal = parseFloat(e.target.value); });
     $('spin').addEventListener('change', e => { spin = e.target.checked; });
     $('piecePNG').addEventListener('click', savePNG);
     $('pieceDelete').addEventListener('click', () => { if (current && remove(current)) closeVitrine(true); });
   }
-  return { init, askSave, update, openVitrine, userMoved() { }, escape() { if (App.view === 'vitrine') closeVitrine(true); }, get items() { return items; } };
+  /** nach einem Sprachwechsel: Liste und offene Einzelansicht neu beschriften */
+  function relabel() { renderList(); if (current) $('pieceMeta').textContent = metaText(current); }
+  return { init, askSave, update, openVitrine, relabel, userMoved() { }, escape() { if (App.view === 'vitrine') closeVitrine(true); }, get items() { return items; } };
 })();
 
 /* ----------------------------------------------------------------
  *  Öffentliche Schnittstelle zum Erweitern (auch aus der Browser-Konsole)
  * ------------------------------------------------------------------- */
 window.Kintsugi = {
-  registerShape, registerGlaze, registerRoom, shapes: SHAPES, glazes: GLAZES, rooms: ROOMS, setRoom,
+  registerShape, registerGlaze, registerFill, registerRoom, shapes: SHAPES, glazes: GLAZES, fills: FILLS, rooms: ROOMS, setRoom,
+  setLang, get lang() { return LANG; }, i18n: I18N,
   newVessel, app: App, gallery: Gallery, physics: PHYS, sound: Sound,
   /** für eigene Experimente: Gitter und Bruch direkt erzeugen */
   buildVesselGrid, fracture,
-  _dbg: { camera: () => studio.camera, orbit: () => orbit, info: () => renderer.info, room: () => studio.room, showcase: () => Showcase, decor: () => studio.decor, sound: () => Sound._dbg(), T, place: s => placeShard(s) }   // nur für automatisierte Tests
+  _dbg: { camera: () => studio.camera, orbit: () => orbit, info: () => renderer.info, room: () => studio.room, showcase: () => Showcase, decor: () => studio.decor, ring: () => studio.brushRing, sound: () => Sound._dbg(), T, place: s => placeShard(s) }   // nur für automatisierte Tests
 };
 
 /*  ▼▼▼  EIGENE FORMEN UND GLASUREN HIER EINTRAGEN  ▼▼▼
